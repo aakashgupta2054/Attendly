@@ -5,11 +5,21 @@ import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 
-// Enable persistence for better mobile and offline performance
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-}, firebaseConfig.firestoreDatabaseId);
+// Enable persistence for better mobile and offline performance with safe fallback
+let firestoreDb;
+try {
+  firestoreDb = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+  }, firebaseConfig.firestoreDatabaseId);
+} catch (e) {
+  try {
+    firestoreDb = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+  } catch (err) {
+    firestoreDb = getFirestore(app);
+  }
+}
 
+export const db = firestoreDb;
 export const auth = getAuth(app);
 
 export enum OperationType {

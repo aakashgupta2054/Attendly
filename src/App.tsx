@@ -187,7 +187,17 @@ export default function App() {
       }
     } catch (error: any) {
       console.error("Login Error:", error);
-      toast.error(`Login failed: ${error.message || "Unknown error"}`);
+      if (error?.code === 'auth/unauthorized-domain') {
+        toast.info(
+          isHindi 
+            ? "Vercel domain abhi Firebase me add nahi hai. Par aap bina login ke local mode me poora app 100% use kar sakte hain!" 
+            : "Domain not yet added in Firebase Auth. All app features work completely in local mode!"
+        );
+      } else if (error?.code === 'auth/popup-blocked') {
+        toast.error(isHindi ? "Popup block ho gaya, kripya browser settings se allow karein" : "Popup was blocked by your browser. Please allow popups.");
+      } else if (error?.code !== 'auth/popup-closed-by-user') {
+        toast.error(`Login error: ${error.message || "Failed"}`);
+      }
     }
   };
 
