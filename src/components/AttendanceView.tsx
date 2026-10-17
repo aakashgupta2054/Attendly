@@ -135,8 +135,33 @@ export default function AttendanceView({
       where('employeeId', '==', user.uid)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
       const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Attendance));
+      
+      // If user has local records from before signing in, sync them to Firestore
+      const localData = localStorage.getItem('local_attendance');
+      if (localData && records.length === 0) {
+        try {
+          const parsed = JSON.parse(localData) as Attendance[];
+          const unbackedRecords = parsed.filter(p => !p.id || !records.some(r => r.date === p.date));
+          if (unbackedRecords.length > 0) {
+            for (const r of unbackedRecords) {
+              await addDoc(collection(db, 'attendance'), {
+                employeeId: user.uid,
+                companyId: 'personal',
+                date: r.date,
+                checkIn: r.checkIn || null,
+                checkOut: r.checkOut || null,
+                status: r.status,
+                ownerId: user.uid
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Local data migration error:", e);
+        }
+      }
+
       setAttendanceRecords(records);
       // Sync to local storage for offline use
       localStorage.setItem('local_attendance', JSON.stringify(records));
