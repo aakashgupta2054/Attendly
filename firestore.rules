@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: companies
+    // Fields: name (string), ownerId (string), createdAt (timestamp)
+    //
+    // Collection: employees
+    // Fields: name (string), companyId (string), basePay (number), 
+    //         overtimePayPerHour (number), breakTimeMinutes (number), 
+    //         deductBreak (bool), lateThreshold (string), ownerId (string)
+    //
+    // Collection: attendance
+    // Fields: employeeId (string), companyId (string), date (string), 
+    //         checkIn (string), checkOut (string), status (string), 
+    //         isLate (bool), ownerId (string)
+    //
+    // Collection: userSettings
+    // Fields: language (string), theme (string), ownerId (string)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.ownerId;
+    }
+
+    function requestOwnerMatchesAuth() {
+      return request.resource.data.ownerId == request.auth.uid;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+             (request.auth.token.email == "akashguptaceh@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidCompany(data) {
+      return data.keys().hasAll(['name', 'ownerId']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.ownerId is string;
+    }
+
+    function isValidEmployee(data) {
+      return data.keys().hasAll(['name', 'companyId', 'ownerId']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.companyId is string &&
+             data.ownerId is string &&
+             (!('basePay' in data) || data.basePay is number) &&
+             (!('overtimePayPerHour' in data) || data.overtimePayPerHour is number) &&
+             (!('breakTimeMinutes' in data) || data.breakTimeMinutes is number) &&
+             (!('deductBreak' in data) || data.deductBreak is bool);
+    }
+
+    function isValidAttendance(data) {
+      return data.keys().hasAll(['employeeId', 'companyId', 'date', 'status', 'ownerId']) &&
+             data.employeeId is string &&
+             data.companyId is string &&
+             data.date is string && data.date.matches("^\\d{4}-\\d{2}-\\d{2}$") &&
+             data.status in ['present', 'absent', 'holiday', 'leave'] &&
+             data.ownerId is string &&
+             (!('checkIn' in data) || data.checkIn is string || data.checkIn == null) &&
+             (!('checkOut' in data) || data.checkOut is string || data.checkOut == null) &&
+             (!('isLate' in data) || data.isLate is bool);
+    }
+
+    function isValidUserSettings(data) {
+      return data.keys().hasAll(['ownerId']) &&
+             data.ownerId is string &&
+             (!('language' in data) || data.language in ['en', 'hi']) &&
+             (!('theme' in data) || data.theme in ['light', 'dark']);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /companies/{companyId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidCompany(request.resource.data) && requestOwnerMatchesAuth();
+      allow update: if isDocOwner() && isValidCompany(request.resource.data) && requestOwnerMatchesAuth();
+      allow delete: if isDocOwner();
+    }
+
+    match /employees/{employeeId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidEmployee(request.resource.data) && requestOwnerMatchesAuth();
+      allow update: if isDocOwner() && isValidEmployee(request.resource.data) && requestOwnerMatchesAuth();
+      allow delete: if isDocOwner();
+    }
+
+    match /attendance/{attendanceId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidAttendance(request.resource.data) && requestOwnerMatchesAuth();
+      allow update: if isDocOwner() && isValidAttendance(request.resource.data) && requestOwnerMatchesAuth();
+      allow delete: if isDocOwner();
+    }
+
+    match /userSettings/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUserSettings(request.resource.data) && requestOwnerMatchesAuth();
+      allow update: if isOwner(userId) && isValidUserSettings(request.resource.data) && requestOwnerMatchesAuth();
+      allow delete: if isOwner(userId);
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

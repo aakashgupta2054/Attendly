@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "Company": {
+      "title": "Company",
+      "description": "Represents a company using the attendance system.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "The name of the company." },
+        "ownerId": { "type": "string", "description": "The UID of the user who owns this company record." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "ownerId"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "Represents an employee in a company.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "companyId": { "type": "string" },
+        "basePay": { "type": "number", "description": "Monthly base pay." },
+        "overtimePayPerHour": { "type": "number" },
+        "breakTimeMinutes": { "type": "number" },
+        "deductBreak": { "type": "boolean" },
+        "lateThreshold": { "type": "string", "description": "Time after which employee is considered late (e.g., '09:15')." },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["name", "companyId", "ownerId"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Attendance record for an employee on a specific date.",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "companyId": { "type": "string" },
+        "date": { "type": "string", "format": "date", "description": "ISO date string (YYYY-MM-DD)." },
+        "checkIn": { "type": "string", "description": "ISO time string or HH:mm." },
+        "checkOut": { "type": "string" },
+        "status": { "type": "string", "enum": ["present", "absent", "holiday", "leave"] },
+        "isLate": { "type": "boolean" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["employeeId", "companyId", "date", "status", "ownerId"]
+    },
+    "UserSettings": {
+      "title": "User Settings",
+      "description": "User preferences and global settings.",
+      "type": "object",
+      "properties": {
+        "language": { "type": "string", "enum": ["en", "hi"] },
+        "theme": { "type": "string", "enum": ["light", "dark"] },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["ownerId"]
+    }
+  },
+  "firestore": {
+    "/companies/{companyId}": {
+      "schema": "Company",
+      "description": "Collection of companies."
+    },
+    "/employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "Collection of employees."
+    },
+    "/attendance/{attendanceId}": {
+      "schema": "Attendance",
+      "description": "Collection of attendance records."
+    },
+    "/userSettings/{userId}": {
+      "schema": "UserSettings",
+      "description": "User specific settings."
+    }
+  }
+}

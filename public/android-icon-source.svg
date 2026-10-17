@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background with Gradient-like solid color -->
+  <rect width="512" height="512" rx="110" fill="#2563eb"/>
+  
+  <!-- Calendar Base -->
+  <rect x="106" y="136" width="300" height="300" rx="30" fill="white"/>
+  
+  <!-- Calendar Header (Red) -->
+  <path d="M106 166c0-16.568 13.432-30 30-30h240c16.568 0 30 13.432 30 30v50H106v-50z" fill="#ef4444"/>
+  
+  <!-- Checkmark (Success/Attendance) -->
+  <path d="M216 336l40 40 80-80" fill="none" stroke="#2563eb" stroke-width="35" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Calendar Rings -->
+  <rect x="166" y="106" width="25" height="60" rx="12.5" fill="#d1d5db"/>
+  <rect x="321" y="106" width="25" height="60" rx="12.5" fill="#d1d5db"/>
+</svg>
