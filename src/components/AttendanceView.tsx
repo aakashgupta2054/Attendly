@@ -38,11 +38,15 @@ import { motion } from 'motion/react';
 interface AttendanceViewProps {
   user: User | null;
   userSettings: UserSettings | null;
+  localProfile?: { name: string; phone?: string } | null;
+  onOpenAuth?: () => void;
 }
 
 export default function AttendanceView({
   user,
-  userSettings
+  userSettings,
+  localProfile,
+  onOpenAuth
 }: AttendanceViewProps) {
   const { t, i18n } = useTranslation();
   const isHindi = i18n.language === 'hi';
@@ -285,59 +289,102 @@ export default function AttendanceView({
 
   const modifierStyles = React.useMemo(() => ({
     present: { 
-      backgroundColor: 'rgba(34, 197, 94, 0.16)', 
-      border: '1.5px solid rgba(34, 197, 94, 0.7)', 
-      fontWeight: '600'
+      backgroundColor: '#dcfce7', 
+      border: '2px solid #22c55e', 
+      color: '#15803d',
+      fontWeight: '700'
     },
     absent: { 
-      backgroundColor: 'rgba(239, 68, 68, 0.16)', 
-      border: '1.5px solid rgba(239, 68, 68, 0.7)', 
-      fontWeight: '600'
+      backgroundColor: '#fee2e2', 
+      border: '2px solid #ef4444', 
+      color: '#b91c1c',
+      fontWeight: '700'
     },
     leave: { 
-      backgroundColor: 'rgba(14, 165, 233, 0.16)', 
-      border: '1.5px solid rgba(14, 165, 233, 0.7)', 
-      fontWeight: '600'
+      backgroundColor: '#e0f2fe', 
+      border: '2px solid #0284c7', 
+      color: '#0369a1',
+      fontWeight: '700'
     },
   }), []);
 
   return (
-    <div className="space-y-6 sm:space-y-8 pb-12 w-full max-w-5xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 pb-12 w-full max-w-5xl mx-auto">
+      {/* User Greeting & Login Status Banner */}
+      <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-card border border-border/60 shadow-xs">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 overflow-hidden">
+            {user?.photoURL ? (
+              <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="font-bold text-sm text-primary">
+                {(user?.displayName || localProfile?.name || 'A').slice(0, 2).toUpperCase()}
+              </span>
+            )}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-bold text-sm sm:text-base truncate">
+                {user?.displayName || localProfile?.name || (isHindi ? 'नमस्ते, गेस्ट यूजर' : 'Welcome, Guest')}
+              </h3>
+              {user ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold py-0.5 px-2 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Cloud Logged In
+                </span>
+              ) : localProfile ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold py-0.5 px-2 rounded-full bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  Active Profile
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium py-0.5 px-2 rounded-full bg-muted text-muted-foreground border border-border/40">
+                  Offline Mode
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground truncate">
+              {user?.email || localProfile?.phone || (isHindi ? 'हाजिरी व वेतन गणना' : 'Attendance & Payroll')}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Monthly Stats Bento Highlight */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bento-card col-span-1 p-4 sm:p-5 border-green-500/20 bg-green-500/[0.03]">
+        <div className="bento-card col-span-1 p-4 sm:p-5 border-emerald-500/30 bg-emerald-50/80 dark:bg-emerald-950/40 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+             <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center shadow-xs">
+                <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
              </div>
-             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('present')}</span>
+             <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">{t('present')}</span>
           </div>
           <div className="flex items-baseline gap-1">
-            <h3 className="text-2xl sm:text-3xl font-bold font-heading">{toHindiNumerals(monthlyStats.presentDays)}</h3>
-            <span className="text-xs sm:text-sm font-medium text-muted-foreground">{t('days')}</span>
+            <h3 className="text-2xl sm:text-3xl font-bold font-heading text-emerald-700 dark:text-emerald-300">{toHindiNumerals(monthlyStats.presentDays)}</h3>
+            <span className="text-xs sm:text-sm font-medium text-emerald-600/80 dark:text-emerald-400/80">{t('days')}</span>
           </div>
         </div>
 
-        <div className="bento-card col-span-1 p-4 sm:p-5 border-amber-500/20 bg-amber-500/[0.03]">
+        <div className="bento-card col-span-1 p-4 sm:p-5 border-amber-500/30 bg-amber-50/80 dark:bg-amber-950/40 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
+             <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center shadow-xs">
+                <Clock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
              </div>
-             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('overtime') || 'Overtime'}</span>
+             <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">{t('overtime') || 'Overtime'}</span>
           </div>
           <div className="flex items-baseline gap-1">
-            <h3 className="text-2xl sm:text-3xl font-bold font-heading">{toHindiNumerals(monthlyStats.overtimeHours)}</h3>
-            <span className="text-xs sm:text-sm font-medium text-muted-foreground">{t('hrs_ot')}</span>
+            <h3 className="text-2xl sm:text-3xl font-bold font-heading text-amber-700 dark:text-amber-300">{toHindiNumerals(monthlyStats.overtimeHours)}</h3>
+            <span className="text-xs sm:text-sm font-medium text-amber-600/80 dark:text-amber-400/80">{t('hrs_ot')}</span>
           </div>
         </div>
 
-        <div className="bento-card col-span-2 p-4 sm:p-5 border-primary/15 bg-primary/[0.03] flex flex-col justify-between">
+        <div className="bento-card col-span-2 p-4 sm:p-5 border-blue-500/30 bg-blue-50/80 dark:bg-blue-950/40 flex flex-col justify-between shadow-sm">
            <div>
              <div className="flex items-center gap-2 mb-1.5">
-               <CalendarDays className="w-4 h-4 text-primary" />
-               <span className="text-[10px] font-bold text-primary/70 uppercase tracking-wider">{t('monthly_summary')}</span>
+               <CalendarDays className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+               <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">{t('monthly_summary')}</span>
              </div>
-             <h4 className="text-lg sm:text-xl font-bold font-heading">
+             <h4 className="text-lg sm:text-xl font-bold font-heading text-blue-950 dark:text-blue-100">
                 {isHindi 
                   ? `${format(date, 'MMMM', { locale: hi })} ${toHindiNumerals(format(date, 'yyyy'))}`
                   : format(date, 'MMMM yyyy', { locale: enUS })
@@ -346,12 +393,12 @@ export default function AttendanceView({
            </div>
            <div className="flex gap-6 mt-3">
               <div>
-                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">{t('absent')}</p>
-                 <p className="text-lg sm:text-xl font-bold text-red-500">{toHindiNumerals(attendanceRecords.filter(r => isSameMonth(parseISO(r.date), date) && r.status === 'absent').length)}</p>
+                 <p className="text-[10px] text-rose-600 dark:text-rose-400 font-bold uppercase tracking-wide mb-0.5">{t('absent')}</p>
+                 <p className="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400">{toHindiNumerals(attendanceRecords.filter(r => isSameMonth(parseISO(r.date), date) && r.status === 'absent').length)}</p>
               </div>
-              <div className="border-l pl-6 border-border/40">
-                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">{t('leave')}</p>
-                 <p className="text-lg sm:text-xl font-bold text-sky-500">{toHindiNumerals(attendanceRecords.filter(r => isSameMonth(parseISO(r.date), date) && r.status === 'leave').length)}</p>
+              <div className="border-l pl-6 border-blue-200 dark:border-blue-800">
+                 <p className="text-[10px] text-sky-600 dark:text-sky-400 font-bold uppercase tracking-wide mb-0.5">{t('leave')}</p>
+                 <p className="text-xl sm:text-2xl font-bold text-sky-600 dark:text-sky-400">{toHindiNumerals(attendanceRecords.filter(r => isSameMonth(parseISO(r.date), date) && r.status === 'leave').length)}</p>
               </div>
            </div>
         </div>
